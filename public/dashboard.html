@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Admin Dashboard — Manage your stories and poems">
+  <title>Dashboard — Renuka's Katha</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="dashboard-page">
+    <!-- Top Nav -->
+    <nav class="dashboard-nav">
+      <a href="/" class="brand">📖 Renuka's Katha</a>
+      <div class="nav-actions">
+        <a href="/" class="btn btn-secondary btn-sm">🏠 View Site</a>
+        <button class="btn btn-secondary btn-sm" id="logoutBtn">Logout</button>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="dashboard-container">
+      <div class="dashboard-header">
+        <h2>📝 Your Posts</h2>
+        <button class="btn btn-primary" id="newPostBtn" style="width: auto;">
+          ✨ New Post
+        </button>
+      </div>
+
+      <!-- Posts List -->
+      <div class="posts-table" id="postsTable">
+        <div class="loading-spinner"></div>
+      </div>
+    </div>
+
+    <!-- Post Form Modal -->
+    <div class="modal-overlay" id="postModal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 id="modalTitle">New Post</h3>
+          <button class="modal-close" id="modalClose">&times;</button>
+        </div>
+
+        <form id="postForm">
+          <input type="hidden" id="postId">
+
+          <div class="form-group">
+            <label for="postTitle">Title</label>
+            <input 
+              type="text" 
+              id="postTitle" 
+              placeholder="Give your post a beautiful title"
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="postCategory">Category</label>
+            <select id="postCategory" required>
+              <option value="">Select category</option>
+              <option value="Story">📖 Story</option>
+              <option value="Poem">🪶 Poem</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="postContent">Content</label>
+            <textarea 
+              id="postContent" 
+              placeholder="Write your story or poem here..."
+              rows="10"
+              required
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Cover Image (optional)</label>
+            <div class="file-input-wrapper">
+              <input type="file" id="postImage" accept="image/*">
+              <div class="file-input-label" id="fileLabel">
+                📷 Click or drag to upload a cover image
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="saveBtn">
+              Publish Post
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>

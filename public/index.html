@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Renuka's Katha — Stories & Poems from the Heart">
+  <title>Renuka's Katha — Stories & Poems from the Heart</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <a href="/login" class="admin-btn">Admin Login</a>
+
+  <div class="scroll-indicator" id="scrollIndicator">
+    <span>Scroll to explore</span>
+    <div class="mouse"></div>
+  </div>
+
+  <!-- GALAXY CANVAS — one continuous starfield for entire page -->
+  <canvas id="galaxyCanvas"></canvas>
+
+  <!-- Lens flare layer -->
+  <div class="flare-layer">
+    <div class="flare f1"></div>
+    <div class="flare f2"></div>
+  </div>
+
+  <!-- SECTIONS — just text floating over the stars -->
+  <div class="scroll-container">
+
+    <section class="scene" id="s1">
+      <div class="scene-content">
+        <h1 class="hero-title">Renuka's Katha</h1>
+        <p class="sloka">"कर्मण्येवाधिकारस्ते मा फलेषु कदाचन"</p>
+        <p class="sloka-en">You have the right to perform your duty, not to the results</p>
+      </div>
+    </section>
+
+    <section class="scene" id="s2">
+      <div class="scene-content">
+        <h2>✦ Through the Stars ✦</h2>
+        <p class="sloka">"यदा यदा हि धर्मस्य ग्लानिर्भवति भारत"</p>
+        <p class="sloka-en">Whenever righteousness declines, I manifest myself</p>
+      </div>
+    </section>
+
+    <section class="scene" id="s3">
+      <div class="scene-content">
+        <h2>🌍 Our Beautiful Earth</h2>
+        <p class="sloka">"वासांसि जीर्णानि यथा विहाय"</p>
+        <p class="sloka-en">Just as one sheds old clothes and wears new ones</p>
+      </div>
+    </section>
+
+    <section class="scene" id="s4">
+      <div class="scene-content">
+        <h2>🇮🇳 Heart of India</h2>
+        <p class="sloka">"सर्वधर्मान्परित्यज्य मामेकं शरणं व्रज"</p>
+        <p class="sloka-en">Surrender unto me, I shall liberate you from all sins</p>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- CONTENT -->
+  <section class="content-section" id="content-section">
+    <div class="section-header">
+      <h2>📖 Published Works</h2>
+      <p>Stories and poems written with love</p>
+      <span class="divider"></span>
+    </div>
+    <div class="category-filter">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="Story">Stories</button>
+      <button class="filter-btn" data-filter="Poem">Poems</button>
+    </div>
+    <div class="posts-grid" id="postsGrid"><div class="loading-spinner"></div></div>
+    <footer class="site-footer">
+      <div class="footer-brand">Renuka's Katha</div>
+      <p>Made with ❤️ — A home for stories and poems</p>
+    </footer>
+  </section>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="/js/main.js"></script>
+</body>
+</html>
