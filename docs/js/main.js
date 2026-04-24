@@ -155,7 +155,7 @@ function initScroll() {
 let allPosts = [];
 async function loadPosts() {
   const g = document.getElementById('postsGrid'); if (!g) return;
-  try { const r = await fetch('data/posts.json'); allPosts = await r.json(); renderPosts(allPosts); }
+  try { const r = await fetch('./data/posts.json'); allPosts = await r.json(); renderPosts(allPosts); }
   catch { g.innerHTML = '<div class="no-posts"><div class="icon">📚</div><p>Unable to load posts.</p></div>'; }
 }
 function renderPosts(posts) {
@@ -181,3 +181,4 @@ function initCategoryFilter() {
 }
 function esc(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
 function fmtDate(d) { return new Date(d).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }); }
+

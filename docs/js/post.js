@@ -98,3 +98,4 @@ function formatDate(dateStr) {
     day: 'numeric'
   });
 }
+
