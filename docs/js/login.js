@@ -1,16 +1,23 @@
 /* ============================================
-   LOGIN.JS — Admin Authentication
+   LOGIN.JS — Client-side Auth (GitHub Pages)
+   Uses localStorage — no server needed
    ============================================ */
+const ADMIN_EMAIL = 'renuka@library.com';
+const ADMIN_PASS = 'moms_library_2026';
+const AUTH_KEY = 'rkl_admin_auth';
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Check if already logged in
-  checkAuth();
+  // Already logged in? Go to dashboard
+  if (localStorage.getItem(AUTH_KEY) === 'true') {
+    window.location.href = 'dashboard.html';
+    return;
+  }
 
   const form = document.getElementById('loginForm');
   const errorDiv = document.getElementById('loginError');
   const loginBtn = document.getElementById('loginBtn');
 
-  form.addEventListener('submit', async (e) => {
+  form.addEventListener('submit', (e) => {
     e.preventDefault();
     errorDiv.textContent = '';
     loginBtn.textContent = 'Signing in...';
@@ -19,38 +26,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
 
-    try {
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        window.location.href = '/dashboard';
+    // Simulate small delay for UX
+    setTimeout(() => {
+      if (email === ADMIN_EMAIL && password === ADMIN_PASS) {
+        localStorage.setItem(AUTH_KEY, 'true');
+        window.location.href = 'dashboard.html';
       } else {
-        errorDiv.textContent = data.message || 'Invalid credentials';
+        errorDiv.textContent = 'Invalid email or password';
         loginBtn.textContent = 'Sign In';
         loginBtn.disabled = false;
       }
-    } catch (err) {
-      errorDiv.textContent = 'Connection error. Is the server running?';
-      loginBtn.textContent = 'Sign In';
-      loginBtn.disabled = false;
-    }
+    }, 500);
   });
 });
-
-async function checkAuth() {
-  try {
-    const res = await fetch('/api/auth/check');
-    const data = await res.json();
-    if (data.isAdmin) {
-      window.location.href = '/dashboard';
-    }
-  } catch (err) {
-    // Not logged in, stay on login page
-  }
-}

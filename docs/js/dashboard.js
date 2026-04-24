@@ -1,70 +1,69 @@
 /* ============================================
-   DASHBOARD.JS — Admin Post Management
+   DASHBOARD.JS — Client-side Post Management
+   All CRUD via localStorage — no server needed
    ============================================ */
+const AUTH_KEY = 'rkl_admin_auth';
+const POSTS_KEY = 'rkl_posts';
 
 document.addEventListener('DOMContentLoaded', () => {
-  checkDashboardAuth();
-  loadDashboardPosts();
+  // Auth check
+  if (localStorage.getItem(AUTH_KEY) !== 'true') {
+    window.location.href = 'login.html';
+    return;
+  }
+  initPosts();
   initModal();
   initLogout();
   initFileInput();
 });
 
-/* ---- Auth Check ---- */
-async function checkDashboardAuth() {
-  try {
-    const res = await fetch('/api/auth/check');
-    const data = await res.json();
-    if (!data.isAdmin) {
-      window.location.href = '/login';
-    }
-  } catch (err) {
-    window.location.href = '/login';
+/* ---- Initialize posts from static JSON if localStorage is empty ---- */
+async function initPosts() {
+  if (!localStorage.getItem(POSTS_KEY)) {
+    try {
+      const res = await fetch('data/posts.json');
+      const posts = await res.json();
+      localStorage.setItem(POSTS_KEY, JSON.stringify(posts));
+    } catch { localStorage.setItem(POSTS_KEY, '[]'); }
   }
+  loadDashboardPosts();
+}
+
+function getPosts() {
+  try { return JSON.parse(localStorage.getItem(POSTS_KEY)) || []; }
+  catch { return []; }
+}
+
+function savePosts(posts) {
+  localStorage.setItem(POSTS_KEY, JSON.stringify(posts));
 }
 
 /* ---- Load Posts ---- */
-async function loadDashboardPosts() {
+function loadDashboardPosts() {
   const table = document.getElementById('postsTable');
+  const posts = getPosts();
 
-  try {
-    const res = await fetch('/api/posts');
-    const posts = await res.json();
-
-    if (posts.length === 0) {
-      table.innerHTML = `
-        <div class="no-posts">
-          <div class="icon">✨</div>
-          <p>No posts yet. Click "New Post" to create your first story or poem!</p>
-        </div>
-      `;
-      return;
-    }
-
-    table.innerHTML = posts.map(post => `
-      <div class="post-row">
-        <div class="post-info">
-          <h4>${escapeHtml(post.title)}</h4>
-          <div class="meta">
-            <span class="badge">${post.category}</span>
-            <span>${formatDate(post.createdAt)}</span>
-          </div>
-        </div>
-        <div class="post-actions">
-          <button class="btn btn-secondary btn-sm" onclick="viewPost('${post.id}')">👁️ View</button>
-          <button class="btn btn-secondary btn-sm" onclick="editPost('${post.id}')">✏️ Edit</button>
-          <button class="btn btn-danger btn-sm" onclick="deletePost('${post.id}', '${escapeHtml(post.title).replace(/'/g, "\\'")}')">🗑️ Delete</button>
-        </div>
-      </div>
-    `).join('');
-  } catch (err) {
-    table.innerHTML = `
-      <div class="no-posts">
-        <div class="icon">⚠️</div>
-        <p>Error loading posts. Please refresh the page.</p>
-      </div>
-    `;
+  if (posts.length === 0) {
+    table.innerHTML = `<div class="no-posts"><div class="icon">✨</div><p>No posts yet. Click "New Post" to create your first story or poem!</p></div>`;
+    return;
   }
+
+  table.innerHTML = posts.map(post => `
+    <div class="post-row">
+      <div class="post-info">
+        <h4>${escapeHtml(post.title)}</h4>
+        <div class="meta">
+          <span class="badge">${post.category}</span>
+          <span>${formatDate(post.createdAt)}</span>
+        </div>
+      </div>
+      <div class="post-actions">
+        <button class="btn btn-secondary btn-sm" onclick="viewPost('${post.id}')">👁️ View</button>
+        <button class="btn btn-secondary btn-sm" onclick="editPost('${post.id}')">✏️ Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deletePost('${post.id}', '${escapeHtml(post.title).replace(/'/g, "\\'")}')">🗑️ Delete</button>
+      </div>
+    </div>
+  `).join('');
 }
 
 /* ---- Modal ---- */
@@ -78,22 +77,9 @@ function initModal() {
   newBtn.addEventListener('click', () => openModal());
   closeBtn.addEventListener('click', () => closeModal());
   cancelBtn.addEventListener('click', () => closeModal());
-
-  // Close on backdrop click
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) closeModal();
-  });
-
-  // Form submit
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    await savePost();
-  });
-
-  // ESC key to close
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeModal();
-  });
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+  form.addEventListener('submit', (e) => { e.preventDefault(); savePost(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 }
 
 function openModal(post = null) {
@@ -101,7 +87,6 @@ function openModal(post = null) {
   const title = document.getElementById('modalTitle');
   const saveBtn = document.getElementById('saveBtn');
 
-  // Reset form
   document.getElementById('postForm').reset();
   document.getElementById('postId').value = '';
   document.getElementById('fileLabel').textContent = '📷 Click or drag to upload a cover image';
@@ -128,86 +113,94 @@ function closeModal() {
 }
 
 /* ---- Save Post (Create / Update) ---- */
-async function savePost() {
+function savePost() {
   const id = document.getElementById('postId').value;
   const saveBtn = document.getElementById('saveBtn');
   saveBtn.disabled = true;
   saveBtn.textContent = 'Saving...';
 
-  const formData = new FormData();
-  formData.append('title', document.getElementById('postTitle').value);
-  formData.append('category', document.getElementById('postCategory').value);
-  formData.append('content', document.getElementById('postContent').value);
+  const postTitle = document.getElementById('postTitle').value.trim();
+  const category = document.getElementById('postCategory').value;
+  const content = document.getElementById('postContent').value.trim();
 
-  const imageFile = document.getElementById('postImage').files[0];
-  if (imageFile) {
-    formData.append('coverImage', imageFile);
-  }
-
-  try {
-    const url = id ? `/api/posts/${id}` : '/api/posts';
-    const method = id ? 'PUT' : 'POST';
-
-    const res = await fetch(url, { method, body: formData });
-    const data = await res.json();
-
-    if (data.success) {
-      showToast(id ? 'Post updated successfully! ✨' : 'Post published successfully! 🎉');
-      closeModal();
-      loadDashboardPosts();
-    } else {
-      showToast('Error saving post', true);
-    }
-  } catch (err) {
-    showToast('Connection error', true);
-  }
-
-  saveBtn.disabled = false;
-  saveBtn.textContent = id ? 'Update Post' : 'Publish Post';
-}
-
-/* ---- Edit Post ---- */
-async function editPost(id) {
-  try {
-    const res = await fetch(`/api/posts/${id}`);
-    const post = await res.json();
-    openModal(post);
-  } catch (err) {
-    showToast('Error loading post', true);
-  }
-}
-
-/* ---- Delete Post ---- */
-async function deletePost(id, title) {
-  if (!confirm(`Are you sure you want to delete "${title}"?\n\nThis cannot be undone.`)) {
+  if (!postTitle || !content) {
+    showToast('Please fill in title and content', true);
+    saveBtn.disabled = false;
+    saveBtn.textContent = id ? 'Update Post' : 'Publish Post';
     return;
   }
 
-  try {
-    const res = await fetch(`/api/posts/${id}`, { method: 'DELETE' });
-    const data = await res.json();
+  const posts = getPosts();
+  const imageFile = document.getElementById('postImage').files[0];
 
-    if (data.success) {
-      showToast('Post deleted 🗑️');
-      loadDashboardPosts();
+  const finishSave = (coverImage) => {
+    if (id) {
+      const idx = posts.findIndex(p => p.id === id);
+      if (idx !== -1) {
+        posts[idx].title = postTitle;
+        posts[idx].category = category;
+        posts[idx].content = content;
+        posts[idx].excerpt = content.substring(0, 150);
+        if (coverImage) posts[idx].coverImage = coverImage;
+      }
+      showToast('Post updated successfully! ✨');
     } else {
-      showToast('Error deleting post', true);
+      const newPost = {
+        id: Date.now().toString(),
+        title: postTitle,
+        category,
+        content,
+        excerpt: content.substring(0, 150),
+        coverImage: coverImage || null,
+        createdAt: new Date().toISOString()
+      };
+      posts.unshift(newPost);
+      showToast('Post published successfully! 🎉');
     }
-  } catch (err) {
-    showToast('Connection error', true);
+
+    savePosts(posts);
+    closeModal();
+    loadDashboardPosts();
+    saveBtn.disabled = false;
+    saveBtn.textContent = id ? 'Update Post' : 'Publish Post';
+  };
+
+  if (imageFile) {
+    const reader = new FileReader();
+    reader.onload = (e) => finishSave(e.target.result);
+    reader.readAsDataURL(imageFile);
+  } else {
+    finishSave(null);
   }
 }
 
 /* ---- View Post ---- */
 function viewPost(id) {
-  window.open(`/post/${id}`, '_blank');
+  window.open(`post.html?id=${id}`, '_blank');
+}
+
+/* ---- Edit Post ---- */
+function editPost(id) {
+  const posts = getPosts();
+  const post = posts.find(p => p.id === id);
+  if (post) openModal(post);
+  else showToast('Post not found', true);
+}
+
+/* ---- Delete Post ---- */
+function deletePost(id, title) {
+  if (!confirm(`Are you sure you want to delete "${title}"?\n\nThis cannot be undone.`)) return;
+  let posts = getPosts();
+  posts = posts.filter(p => p.id !== id);
+  savePosts(posts);
+  showToast('Post deleted 🗑️');
+  loadDashboardPosts();
 }
 
 /* ---- File Input Label ---- */
 function initFileInput() {
   const fileInput = document.getElementById('postImage');
   const label = document.getElementById('fileLabel');
-
   fileInput.addEventListener('change', () => {
     if (fileInput.files.length > 0) {
       label.textContent = `✅ ${fileInput.files[0].name}`;
@@ -221,37 +214,20 @@ function initFileInput() {
 
 /* ---- Logout ---- */
 function initLogout() {
-  document.getElementById('logoutBtn').addEventListener('click', async () => {
-    try {
-      await fetch('/api/logout', { method: 'POST' });
-    } catch (err) {}
-    window.location.href = '/login';
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    localStorage.removeItem(AUTH_KEY);
+    window.location.href = 'login.html';
   });
 }
 
-/* ---- Toast Notification ---- */
+/* ---- Toast ---- */
 function showToast(message, isError = false) {
   const toast = document.getElementById('toast');
   toast.textContent = message;
   toast.className = 'toast show' + (isError ? ' error' : '');
-
-  setTimeout(() => {
-    toast.classList.remove('show');
-  }, 3000);
+  setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
 /* ---- Helpers ---- */
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-function formatDate(dateStr) {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('en-IN', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  });
-}
+function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+function formatDate(d) { return new Date(d).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }); }
